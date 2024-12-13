@@ -71,7 +71,7 @@ export function Prompt() {
   const get2dPrompt = () =>
     `Detect ${
       targetPrompt
-    }, with no more than 20 items. Output a json list where each entry contains the the 2D bounding box in "box_2d" and ${
+    }, with no more than 20 items. Output a json list where each entry contains the 2D bounding box in "box_2d" and ${
       labelPrompt || 'a text label'
     } in "label".`
 

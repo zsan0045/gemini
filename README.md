@@ -7,7 +7,7 @@ experiences. These apps are built to run inside AI Studio, but the versions
 included here can run standalone using the
 [Gemini API](https://ai.google.dev/gemini-api/docs).
 
-## [Spatial](/spatial/)
+## [Spatial Understanding](/spatial/)
 
 [Spatial Understanding](https://aistudio.google.com/app/starter-apps/spatial) is
 a simple demonstration of Gemini's 2D and 3D spatial understanding and reasoning
@@ -15,21 +15,21 @@ capabilities. It was built with React.
 
 This example should give you an idea of how to get started with spatial analysis
 using Gemini. Check out [Prompt.tsx](/spatial/src/Prompt.tsx) to see how
-bounding box parsing is implemented. To dive deeper into the Gemini's spatial
+bounding box parsing is implemented. To dive deeper into Gemini's spatial
 reasoning capabilities, check out this
 [Colab notebook](https://github.com/google-gemini/cookbook/blob/main/gemini-2/spatial_understanding.ipynb).
 
 To develop locally, insert your Gemini API key in the `.env` file.
 
-## [Video](/video/)
+## [Video Analyzer](/video/)
 
-[Video Explorer](https://aistudio.google.com/app/starter-apps/video) is a simple
+[Video Analyzer](https://aistudio.google.com/app/starter-apps/video) is a simple
 app that allows you to explore events within videos using Gemini. It was built
 with React.
 
 To develop locally, insert your Gemini API key in the `.env` file.
 
-## [Maps](/maps/)
+## [Map Explorer](/maps/)
 
 [Map Explorer](https://aistudio.google.com/app/starter-apps/map) is a simple app
 that allows you to explore a map using Gemini and the Google Maps API. It was

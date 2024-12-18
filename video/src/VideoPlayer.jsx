@@ -26,6 +26,7 @@ export default function VideoPlayer({
   timecodeList,
   requestedTimecode,
   isLoadingVideo,
+  videoError,
   jumpToTimecode
 }) {
   const [video, setVideo] = useState(null)
@@ -98,7 +99,7 @@ export default function VideoPlayer({
 
   return (
     <div className="videoPlayer">
-      {url ? (
+      {url && !isLoadingVideo ? (
         <>
           <div>
             <video
@@ -175,14 +176,11 @@ export default function VideoPlayer({
       ) : (
         <div className="emptyVideo">
           <p>
-            {isLoadingVideo ? (
-              'Loading video...'
-            ) : (
-              <>
-                <span>👈</span> Add a video by clicking the ⨁ button in the chat
-                input on the bottom left.
-              </>
-            )}
+            {isLoadingVideo
+              ? 'Processing video...'
+              : videoError
+              ? 'Error processing video.'
+              : 'Drag and drop a video file here to get started.'}
           </p>
         </div>
       )}

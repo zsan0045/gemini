@@ -12,22 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {useEffect, useRef, useState} from 'react'
+import {useRef, useState} from 'react'
 import c from 'classnames'
 import VideoPlayer from './VideoPlayer.jsx'
 import Chart from './Chart.jsx'
 import modes from './modes'
 import {timeToSecs} from './utils'
-import * as applet from './aistudio'
+import generateContent from './api'
 import functions from './functions'
 
 const chartModes = Object.keys(modes.Chart.subModes)
 
-const models = ['models/gemini-2.0-flash-exp', 'models/gemini-1.5-flash']
-
 export default function App() {
   const [vidUrl, setVidUrl] = useState(null)
-  const [fileId, setFileId] = useState(null)
+  const [file, setFile] = useState(null)
   const [timecodeList, setTimecodeList] = useState(null)
   const [requestedTimecode, setRequestedTimecode] = useState(null)
   const [selectedMode, setSelectedMode] = useState(Object.keys(modes)[0])
@@ -35,73 +33,110 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [showSidebar, setShowSidebar] = useState(true)
   const [isLoadingVideo, setIsLoadingVideo] = useState(false)
+  const [videoError, setVideoError] = useState(false)
   const [customPrompt, setCustomPrompt] = useState('')
   const [chartMode, setChartMode] = useState(chartModes[0])
   const [chartPrompt, setChartPrompt] = useState('')
   const [chartLabel, setChartLabel] = useState('')
-  const [model, setModel] = useState(models[0])
-  const [theme, setTheme] = useState('dark')
+  const [theme] = useState(
+    window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  )
   const scrollRef = useRef()
   const isCustomMode = selectedMode === 'Custom'
   const isChartMode = selectedMode === 'Chart'
   const isCustomChartMode = isChartMode && chartMode === 'Custom'
   const hasSubMode = isCustomMode || isChartMode
 
+  const setTimecodes = ({timecodes}) =>
+    setTimecodeList(
+      timecodes.map(t => ({...t, text: t.text.replaceAll("\\'", "'")}))
+    )
+
   const onModeSelect = async mode => {
     setActiveMode(mode)
     setIsLoading(true)
     setChartLabel(chartPrompt)
 
-    await applet.generateContent({
-      model,
-      userText: isCustomMode
+    const resp = await generateContent({
+      text: isCustomMode
         ? modes[mode].prompt(customPrompt)
         : isChartMode
         ? modes[mode].prompt(
             isCustomChartMode ? chartPrompt : modes[mode].subModes[chartMode]
           )
         : modes[mode].prompt,
-      files: [fileId]
+      file,
+      functionDeclarations: functions({
+        set_timecodes: setTimecodes,
+        set_timecodes_with_objects: setTimecodes,
+        set_timecodes_with_numeric_values: ({timecodes}) =>
+          setTimecodeList(timecodes)
+      })
     })
+
+    const call = resp.functionCalls()[0]
+
+    if (call) {
+      ;({
+        set_timecodes: setTimecodes,
+        set_timecodes_with_objects: setTimecodes,
+        set_timecodes_with_numeric_values: ({timecodes}) =>
+          setTimecodeList(timecodes)
+      })[call.name](call.args)
+    }
 
     setIsLoading(false)
     scrollRef.current.scrollTo({top: 0})
   }
 
-  useEffect(() => {
-    const setTimecodes = ({timecodes}) =>
-      setTimecodeList(
-        timecodes.map(t => ({...t, text: t.text.replaceAll("\\'", "'")}))
-      )
+  const uploadVideo = async e => {
+    e.preventDefault()
+    setIsLoadingVideo(true)
+    setVidUrl(URL.createObjectURL(e.dataTransfer.files[0]))
 
-    applet
-      .init({
-        systemInstructions: `When given a video and a query, call the relevant \
-function only once with the appropriate timecodes and text for the video`,
-        functionDeclarations: functions({
-          set_timecodes: setTimecodes,
-          set_timecodes_with_objects: setTimecodes,
-          set_timecodes_with_numeric_values: ({timecodes}) =>
-            setTimecodeList(timecodes)
-        }),
-        fileCallback: async file => {
-          setVidUrl(null)
-          setTimecodeList(null)
-          setIsLoadingVideo(true)
-
-          const blob = await applet.getFileContents(file.id)
-          setFileId(file.id)
-          setIsLoadingVideo(false)
-          setVidUrl(URL.createObjectURL(blob))
-        }
+    const formData = new FormData()
+    formData.set('video', e.dataTransfer.files[0])
+    const resp = await (
+      await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
       })
-      .then(({theme}) => setTheme(theme))
-  }, [])
+    ).json()
+    setFile(resp.data)
+    checkProgress(resp.data.name)
+  }
+
+  const checkProgress = async fileId => {
+    const resp = await (
+      await fetch('/api/progress', {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({fileId})
+      })
+    ).json()
+
+    if (resp.progress.state === 'ACTIVE') {
+      setIsLoadingVideo(false)
+    } else if (resp.progress.state === 'FAILED') {
+      setVideoError(true)
+    } else {
+      setTimeout(() => checkProgress(fileId), 1000)
+    }
+  }
 
   return (
-    <main className={theme}>
+    <main
+      className={theme}
+      onDrop={uploadVideo}
+      onDragOver={e => e.preventDefault()}
+      onDragEnter={() => {}}
+      onDragLeave={() => {}}
+    >
       <section className="top">
-        {vidUrl && (
+        {vidUrl && !isLoadingVideo && (
           <>
             <div className={c('modeSelector', {hide: !showSidebar})}>
               {hasSubMode ? (
@@ -197,18 +232,6 @@ function only once with the appropriate timecodes and text for the video`,
                     </div>
                   </div>
                   <div>
-                    <div className="modelSelector">
-                      <select
-                        onChange={e => setModel(e.target.value)}
-                        value={model}
-                      >
-                        {models.map(model => (
-                          <option key={model} value={model}>
-                            {model.replace('models/', '')}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
                     <button
                       className="button generateButton"
                       onClick={() => onModeSelect(selectedMode)}
@@ -236,6 +259,7 @@ function only once with the appropriate timecodes and text for the video`,
           timecodeList={timecodeList}
           jumpToTimecode={setRequestedTimecode}
           isLoadingVideo={isLoadingVideo}
+          videoError={videoError}
         />
       </section>
 

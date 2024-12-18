@@ -15,15 +15,13 @@
 // script.js
 // Authors: kylephillips@ bencobley@
 
-import * as aistudio from "./aistudio.js";
+import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai@0.21.0";
 import * as mapsFunction from "./function-declarations.js";
 import { presets } from "./presets.js";
-import {
-  html,
-  render,
-} from "https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js";
+import { html, render } from "https://esm.run/lit";
 
-const systemInstructions = mapsFunction.systemInstructions;
+const client = new GoogleGenerativeAI('your_key_here');
+const systemInstruction = mapsFunction.systemInstructions;
 
 const functionDeclarations = mapsFunction.declarations.map(declaration => ({
   ...declaration,
@@ -33,43 +31,44 @@ const functionDeclarations = mapsFunction.declarations.map(declaration => ({
   },
 }));
 
-let chat;
+const chat = async (userText) => {
+  try {
+    const temperature = 2; // High temperature for answer variety
+    const {response} = await client
+      .getGenerativeModel(
+        {model: 'models/gemini-2.0-flash-exp', systemInstruction},
+        {apiVersion: 'v1beta'}
+      )
+      .generateContent({
+        contents: [
+          {
+            role: "user",
+            parts: [{text: userText}],
+          },
+        ],
+        generationConfig: {temperature},
+        tools: [{functionDeclarations}]
+      });
+
+    const call = response.functionCalls()[0];
+
+    if (call) {
+      functionDeclarations[0].callback(call.args);
+    }
+  } catch (e) {
+    console.error(e);
+  }
+};
 
 async function init() {
   renderPage("%"); // Start by rendering with empty location query: shows earth
-  try {
-    const initResult = await aistudio.init({
-      systemInstructions,
-      functionDeclarations,
-    });
-
-    // Handle light or dark theme from parent
-    if (initResult.theme === "light") {
-      document.documentElement.setAttribute("data-theme", "light");
-    } else if (initResult.theme === "system") {
-      if (
-        window.matchMedia &&
-        window.matchMedia("(prefers-color-scheme: dark)").matches
-      ) {
-        document.documentElement.removeAttribute("data-theme"); // Use default (dark)
-      } else {
-        document.documentElement.setAttribute("data-theme", "light");
-      }
-    }
-
-    aistudio.chat("Welcome to Map Explorer!");
-
-    chat = async (userText) => {
-      try {
-        const temperature = 2; // High temperature for answer variety
-        const response = await aistudio.generateContent({ userText, temperature });
-        console.log(response);
-      } catch (e) {
-        console.error(e);
-      }
-    };
-  } catch (error) {
-    console.error("Error initializing AI Studio:", error);
+  if (
+    window.matchMedia &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches
+  ) {
+    document.documentElement.removeAttribute("data-theme"); // Use default (dark)
+  } else {
+    document.documentElement.setAttribute("data-theme", "light");
   }
 }
 

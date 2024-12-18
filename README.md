@@ -7,10 +7,11 @@ experiences. These apps are built to run inside AI Studio, but the versions
 included here can run standalone using the
 [Gemini API](https://ai.google.dev/gemini-api/docs).
 
-## [Spatial Understanding](/spatial/)
+## Spatial Understanding
 
-[Spatial Understanding](https://aistudio.google.com/app/starter-apps/spatial) is
-a simple demonstration of Gemini's 2D and 3D spatial understanding and reasoning
+[Spatial Understanding](/spatial/)
+([live demo](https://aistudio.google.com/app/starter-apps/spatial)) is a simple
+demonstration of Gemini's 2D and 3D spatial understanding and reasoning
 capabilities. It was built with React.
 
 This example should give you an idea of how to get started with spatial analysis
@@ -21,20 +22,30 @@ reasoning capabilities, check out this
 
 To develop locally, insert your Gemini API key in the `.env` file.
 
-## [Video Analyzer](/video/)
+## Video Analyzer
 
-[Video Analyzer](https://aistudio.google.com/app/starter-apps/video) is a simple
+[Video Analyzer](/video/)
+([live demo](https://aistudio.google.com/app/starter-apps/video)) is a simple
 app that allows you to explore events within videos using Gemini. It was built
 with React.
 
+This example shows how to get started with video analysis using function
+calling. Check out [functions.js](/video/src/functions.js) to see the function
+definition for this applet!
+
 To develop locally, insert your Gemini API key in the `.env` file.
 
-## [Map Explorer](/maps/)
+## Map Explorer
 
-[Map Explorer](https://aistudio.google.com/app/starter-apps/map) is a simple app
+[Map Explorer](/maps/)
+([live demo](https://aistudio.google.com/app/starter-apps/map)) is a simple app
 that allows you to explore a map using Gemini and the Google Maps API. It was
-built using Lit and the
+built using Lit, and the
 [Maps Embed API](https://developers.google.com/maps/documentation/embed/get-started).
+
+This example will give you an idea of how to get started with function calling.
+See [function-declarations.js](/maps/function-declarations.js) to find out more
+about how function calling is used to call the Maps Embed API here!
 
 To develop locally, insert your Gemini API key where you see `your_key_here` in
 the `script.js` file.

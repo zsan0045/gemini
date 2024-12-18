@@ -78,7 +78,7 @@ export const VideoRefAtom = atom<{ current: HTMLVideoElement | null }>({
   current: null,
 });
 
-export const InitFinishedAtom = atom(false);
+export const InitFinishedAtom = atom(true);
 
 export const BumpSessionAtom = atom(0);
 

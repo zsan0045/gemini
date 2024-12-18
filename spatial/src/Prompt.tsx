@@ -14,10 +14,8 @@
 
 import { useAtom } from "jotai";
 import getStroke from "perfect-freehand";
-// @ts-ignore
-import * as aistudio from "./aistudio.js";
+import {GoogleGenerativeAI} from "@google/generative-ai";
 import {
-  JsonModeAtom,
   BoundingBoxes2DAtom,
   BoundingBoxes3DAtom,
   ShareStream,
@@ -26,38 +24,31 @@ import {
   ModelSelectedAtom,
   PointsAtom,
   HoverEnteredAtom,
-  HoveredBoxAtom,
   LinesAtom,
   ImageSrcAtom,
-  InitFinishedAtom,
   VideoRefAtom,
   TemperatureAtom,
-  ImageSentAtom,
   CustomPromptsAtom,
-  ShowConfigAtom,
 } from "./atoms";
-import { lineOptions, safetySettings } from "./consts.js";
+import { lineOptions } from "./consts.js";
 import { getSvgPathFromStroke, loadImage } from "./utils";
-import { useEffect, useState } from "react";
+import {  useState } from "react";
+
+const client = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 
 export function Prompt() {
   const [temperature, setTemperature] = useAtom(TemperatureAtom);
-  const [jsonMode, setJsonMode] = useAtom(JsonModeAtom);
   const [, setBoundingBoxes2D] = useAtom(BoundingBoxes2DAtom);
   const [, setBoundingBoxes3D] = useAtom(BoundingBoxes3DAtom);
   const [stream] = useAtom(ShareStream);
   const [detectType] = useAtom(DetectTypeAtom);
-  const [imageSent] = useAtom(ImageSentAtom);
   const [modelSelected] = useAtom(ModelSelectedAtom);
   const [, setPoints] = useAtom(PointsAtom);
   const [, setHoverEntered] = useAtom(HoverEnteredAtom);
-  const [, _setHoveredBox] = useAtom(HoveredBoxAtom);
   const [lines] = useAtom(LinesAtom);
   const [videoRef] = useAtom(VideoRefAtom);
   const [imageSrc] = useAtom(ImageSrcAtom);
-  const [showConfig] = useAtom(ShowConfigAtom);
-  const [initFinished] = useAtom(InitFinishedAtom);
-  const [showCustomPrompt, setShowCustomPrompt] = useState(false);
+  const [showCustomPrompt] = useState(false);
   const [targetPrompt, setTargetPrompt] = useState("items");
   const [labelPrompt, setLabelPrompt] = useState("");
   const [showRawPrompt, setShowRawPrompt] = useState(false);
@@ -129,17 +120,29 @@ export function Prompt() {
 
     const prompt = prompts[detectType];
 
-    const object = {
-      userText: is2d ? get2dPrompt() : prompt.join(" "),
-      imageDataURL: imageSent ? undefined : activeDataURL,
-      model: modelSelected,
-      jsonMode: jsonMode,
-      temperature: temperature,
-      safetySettings: safetySettings,
-    };
-
     setHoverEntered(false);
-    let response = await aistudio.generateContent(object);
+
+    let response = (await client
+      .getGenerativeModel(
+        {model: modelSelected},
+        {apiVersion: 'v1beta'}
+      )
+      .generateContent({
+        contents: [
+          {
+            role: "user",
+            parts: [
+              {text: is2d ? get2dPrompt() : prompt.join(" ")},
+              {inlineData: {
+                data: activeDataURL.replace("data:image/png;base64,", ""),
+                mimeType: "image/png"
+              }}
+            ]
+          }
+        ],
+        generationConfig: {temperature}
+      })).response.text()
+
     if (response.includes("```json")) {
       response = response.split("```json")[1].split("```")[0];
     }
@@ -204,12 +207,6 @@ export function Prompt() {
       setBoundingBoxes3D(formattedBoxes);
     }
   }
-
-  useEffect(() => {
-    if (initFinished) {
-      aistudio.clearChat();
-    }
-  }, [detectType, initFinished]);
 
   return (
     <div className="flex grow flex-col gap-3">

@@ -19,8 +19,6 @@ import { ExampleImages } from "./ExampleImages.js";
 import { SideControls } from "./SideControls.js";
 import { Prompt } from "./Prompt.js";
 import { ExtraModeControls } from "./ExtraModeControls.js";
-// @ts-ignore
-import * as aistudio from "./aistudio.js";
 import { useAtom } from "jotai";
 import {
   BumpSessionAtom,
@@ -40,31 +38,9 @@ function App() {
   const [, setIsUploadedImage] = useAtom(IsUploadedImageAtom);
 
   useEffect(() => {
-    async function init() {
-      const {theme} = await aistudio.init({
-        systemInstructions: "",
-        fileCallback: async (file: any) => {
-          resetState();
-          const blob = await aistudio.getFileContents(file.id);
-          const url = URL.createObjectURL(blob);
-          setImageSrc(url);
-          setBumpSession((prev) => prev + 1);
-          setIsUploadedImage(true);
-        },
-        supportsVideo: false,
-        supportsAudio: false,
-        modelResponseCallback: (response: any) => {
-          console.log(response);
-        },
-        safetySettings
-      });
-      setInitFinished(true);
-
-      if (theme === "light") {
-        document.documentElement.classList.remove("dark");
-      }
+    if (!window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      document.documentElement.classList.remove("dark");
     }
-    init();
   }, []);
 
   return (

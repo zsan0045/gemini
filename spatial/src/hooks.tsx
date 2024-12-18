@@ -20,8 +20,6 @@ import {
   ImageSentAtom,
   PointsAtom,
 } from "./atoms";
-// @ts-ignore
-import * as aistudio from "./aistudio.js";
 
 export function useResetState() {
   const [, setImageSent] = useAtom(ImageSentAtom);
@@ -36,6 +34,5 @@ export function useResetState() {
     setBoundingBoxes3D([]);
     setBumpSession((prev) => prev + 1);
     setPoints([]);
-    aistudio.clearChat();
   };
 }

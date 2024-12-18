@@ -14,9 +14,6 @@
 
 import { useAtom } from "jotai";
 import { DetectTypeAtom, HoverEnteredAtom } from "./atoms";
-// import { useResetState } from "./hooks";
-// @ts-ignore
-import * as aistudio from "./aistudio.js";
 import { DetectTypes } from "./Types.js";
 
 export function DetectTypeSelector() {

@@ -33,8 +33,6 @@ import {
 import { getSvgPathFromStroke } from "./utils";
 import { lineOptions } from "./consts";
 import { ResizePayload, useResizeDetector } from "react-resize-detector";
-// @ts-ignore
-import * as aistudio from "./aistudio.js";
 
 export function Content() {
   const [imageSrc] = useAtom(ImageSrcAtom);

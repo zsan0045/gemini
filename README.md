@@ -1,6 +1,6 @@
-# AI Studio Starter Applets
+# Google AI Studio Starter Applets
 
-This repository contains the source code for AI Studio's
+This repository contains the source code for Google AI Studio's
 [starter apps](https://aistudio.google.com/app/starter-apps) — a collection of
 small apps that demonstrate how Gemini can be used to create interactive
 experiences. These apps are built to run inside AI Studio, but the versions
